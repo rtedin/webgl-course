@@ -1,3 +1,8 @@
+/* Globals ********************************************************************/
+var twist     = 0.0; // Amount of twist
+var divisions = 4;   // Number of divisions
+/******************************************************************************/
+
 /**
  * Sets up the canvas and returns a webGL context.
  */
@@ -30,24 +35,24 @@ function rotateVertex(vertex, theta) {
 
 /**
  * Returns the vertex resulting from rotating the vertex 'vertex' by
- * 'theta' * ' twistAmount * lenght('vertex') radians.
+ * 'twistAmount' * lenght('vertex') radians.
  */
-function twistVertex(vertex, theta, twistAmount) {
+function twistVertex(vertex, twistAmount) {
    var x = vertex[0];
    var y = vertex[1];
-   var d = twistAmount === 0.0 ? 1.0 : twistAmount * length(vertex);
-   sintheta = Math.sin(theta * d);
-   costheta = Math.cos(theta * d);
+   var theta = twistAmount * length(vertex);
+   sintheta = Math.sin(theta);
+   costheta = Math.cos(theta);
    return vec2(x * costheta - y * sintheta, x * sintheta + y * costheta);
 }
 
 /**
- * Applies a twist to all the vertices in 'vertices. Each vertex is rotated by
- * 'theta' * ' twistAmount * lenght(vertex) radians around the origin.
+ * Applies a twist to all the vertices in 'vertices'. Each vertex is rotated by
+ * 'twistAmount' * lenght(vertex) radians around the origin.
  */
-function twistVertices(vertices, theta, twistAmount) {
+function twistVertices(vertices, twistAmount) {
    for(var i = 0; i < vertices.length; i++) {
-      vertices[i] = twistVertex(vertices[i], theta, twistAmount);
+      vertices[i] = twistVertex(vertices[i], twistAmount);
    }
 }
 
@@ -71,20 +76,20 @@ function divideTriangle(triangle, numDiv, vertices) {
 
 /**
  * Creates and returns an array with the vertices to render.
- * 'numDiv' is the number of times to divide the original triangle.
  */
-function createVerticesArray(numDiv) {
+function createVerticesArray() {
    var a = vec2(0, 0.7);
    var triangle = Triangle(a, rotateVertex(a, 2.0 * Math.PI / 3.0),
                            rotateVertex(a, -2.0 * Math.PI / 3.0));
    var vertices = [];
-   divideTriangle(triangle, numDiv, vertices);
-   twistVertices(vertices, Math.PI, 0);
+   divideTriangle(triangle, divisions, vertices);
+   twistVertices(vertices, twist);
    return vertices;
 }
 
 /**
- * Sends the vertices to a buffer in the GPU using the passed WebGL context.
+ * Sends the vertices 'vertices' to a buffer in the GPU using the WebGL context
+ * 'gl'.
  */
 function sendVerticesToGPU(vertices, glContext) {
    var program = initShaders(glContext, "vertex-shader", "fragment-shader");
@@ -101,19 +106,30 @@ function sendVerticesToGPU(vertices, glContext) {
 }
 
 /**
- * Renders the passed WebGL context.
+ * Renders the WebGL context 'gl' that contains 'numVertices' vertices.
  */
 function render(gl, numVertices) {
    gl.clear(gl.COLOR_BUFFER_BIT);
    gl.drawArrays(gl.TRIANGLES, 0, numVertices);
 }
 
-window.onload = function init() {
-//    document.getElementById("twist").onchange = function() {
-//       console.log(event.srcElement.value);
-//    }
-   var gl = setUpCanvas(); if(!gl) { alert("WegGL is not available"); }
-   var vertices = createVerticesArray(8);
+/**
+ * Processes the vertices and reders them in the WebGL context 'gl'.
+ */
+function processAndRender(gl) {
+   var vertices = createVerticesArray();
    sendVerticesToGPU(vertices, gl);
    render(gl, vertices.length);
+}
+window.onload = function init() {
+   var gl = setUpCanvas(); if(!gl) { alert("WegGL is not available"); }
+   processAndRender(gl);
+   document.getElementById("twist").onchange = function() {
+      twist = event.srcElement.value / 10.0;
+      processAndRender(gl);
+   }
+   document.getElementById("divisions").onchange = function() {
+      divisions = event.srcElement.value;
+      processAndRender(gl);
+   }
 }

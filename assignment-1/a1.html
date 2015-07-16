@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>Assignment 1</title>
+   <script type="text/javascript" src="../common/webgl-utils.js"></script>
+   <script type="text/javascript" src="../common/initShaders.js"></script>
+   <script type="text/javascript" src="../common/MV.js"></script>
+   <script type="text/javascript" src="a1.js"></script>
+   
+   <script id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 vPosition;
+      void main(void) {
+         gl_Position = vPosition;
+      }
+   </script>
+   
+   <script id="fragment-shader" type="x-shader/x-fragment">
+      precision mediump float;
+      void main(void) {
+         gl_FragColor = vec4(0.0, 0.0, 0.8, 1.0);
+      }
+   </script>
+</head>
+<body>
+   <canvas id="gl-canvas" width="512" height="512">
+      HTML5 canvas element is not supported. Use a real browser...
+   </canvas>
+   <div>
+      twist 0
+      <input id="twist" type="range" min="0" max="100" step="1" value="0" />
+       10
+   </div>
+   <div>
+      divisions 1
+      <input id="divisions" type="range" min="1" max="8" step="1" value="4" />
+       8
+   </div>
+</body>
+</html>

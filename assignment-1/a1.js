@@ -10,10 +10,38 @@ function setUpCanvas() {
 }
 
 /**
- * Creates and returns an array with the vertices to render.
+ * Returns a triangle with vertices 'a', 'b' and 'c'.
  */
-function createVerticesArray() {
-   return [vec2(-1, -1), vec2(0, 1), vec2(1, -1)];
+function Triangle(a, b, c) {
+   return {'a': a, 'b': b, 'c': c};
+}
+
+/**
+ * Divides a triangle 'triangle' recursively a 'numDiv' of times and stores the
+ * vertices in 'vertices'.
+ */
+function divideTriangle(triangle, numDiv, vertices) {
+   if(numDiv === 0) {
+      vertices.push(triangle.a, triangle.b, triangle.c);
+   } else {
+      var ab = mix(triangle.a, triangle.b, 0.5);
+      var bc = mix(triangle.b, triangle.c, 0.5);
+      var ac = mix(triangle.a, triangle.c, 0.5);
+      divideTriangle(Triangle(triangle.a, ab, ac), numDiv - 1, vertices);
+      divideTriangle(Triangle(ab, triangle.b, bc), numDiv - 1, vertices);
+      divideTriangle(Triangle(ac, bc, triangle.c), numDiv - 1, vertices);
+   }
+}
+
+/**
+ * Creates and returns an array with the vertices to render.
+ * 'numDiv' is the number of times to divide the original triangle.
+ */
+function createVerticesArray(numDiv) {
+   var firstTriangle = Triangle(vec2(-1, -1), vec2(0, 1), vec2(1, -1));
+   var vertices = [];
+   divideTriangle(firstTriangle, numDiv, vertices);
+   return vertices;
 }
 
 /**
@@ -43,8 +71,7 @@ function render(gl, numVertices) {
 
 window.onload = function init() {
    var gl = setUpCanvas(); if(!gl) { alert("WegGL is not available"); }
-   var vertices = createVerticesArray();
+   var vertices = createVerticesArray(5);
    sendVerticesToGPU(vertices, gl);
    render(gl, vertices.length);
 }
-

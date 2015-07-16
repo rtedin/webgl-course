@@ -17,7 +17,7 @@ function Triangle(a, b, c) {
 }
 
 /**
- * Returns the vertex resulting form rotating vertex 'vertex' 'theta' radians
+ * Returns the vertex resulting from rotating vertex 'vertex' 'theta' radians
  * around the origin.
  */
 function rotateVertex(vertex, theta) {
@@ -29,11 +29,25 @@ function rotateVertex(vertex, theta) {
 }
 
 /**
- * Rotates the vertices 'vertices' by 'theta' radians around the origin.
+ * Returns the vertex resulting from rotating the vertex 'vertex' by
+ * 'theta' * ' twistAmount * lenght('vertex') radians.
  */
-function rotateVertices(vertices, theta) {
+function twistVertex(vertex, theta, twistAmount) {
+   var x = vertex[0];
+   var y = vertex[1];
+   var d = twistAmount === 0.0 ? 1.0 : twistAmount * length(vertex);
+   sintheta = Math.sin(theta * d);
+   costheta = Math.cos(theta * d);
+   return vec2(x * costheta - y * sintheta, x * sintheta + y * costheta);
+}
+
+/**
+ * Applies a twist to all the vertices in 'vertices. Each vertex is rotated by
+ * 'theta' * ' twistAmount * lenght(vertex) radians around the origin.
+ */
+function twistVertices(vertices, theta, twistAmount) {
    for(var i = 0; i < vertices.length; i++) {
-      vertices[i] = rotateVertex(vertices[i], theta);
+      vertices[i] = twistVertex(vertices[i], theta, twistAmount);
    }
 }
 
@@ -51,7 +65,7 @@ function divideTriangle(triangle, numDiv, vertices) {
       divideTriangle(Triangle(triangle.a, ab, ac), numDiv - 1, vertices);
       divideTriangle(Triangle(ab, triangle.b, bc), numDiv - 1, vertices);
       divideTriangle(Triangle(ac, bc, triangle.c), numDiv - 1, vertices);
-//       divideTriangle(Triangle(ab, bc, ac), numDiv - 1, vertices);
+      divideTriangle(Triangle(ab, bc, ac), numDiv - 1, vertices);
    }
 }
 
@@ -65,7 +79,7 @@ function createVerticesArray(numDiv) {
                            rotateVertex(a, -2.0 * Math.PI / 3.0));
    var vertices = [];
    divideTriangle(triangle, numDiv, vertices);
-   rotateVertices(vertices, Math.PI/2);
+   twistVertices(vertices, Math.PI, 0);
    return vertices;
 }
 
@@ -95,8 +109,11 @@ function render(gl, numVertices) {
 }
 
 window.onload = function init() {
+//    document.getElementById("twist").onchange = function() {
+//       console.log(event.srcElement.value);
+//    }
    var gl = setUpCanvas(); if(!gl) { alert("WegGL is not available"); }
-   var vertices = createVerticesArray(4);
+   var vertices = createVerticesArray(8);
    sendVerticesToGPU(vertices, gl);
    render(gl, vertices.length);
 }

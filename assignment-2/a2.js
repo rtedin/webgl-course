@@ -31,18 +31,23 @@ window.onload = function () {
     gl.enableVertexAttribArray(vPosition);
 
     // Adapter that calls the real mouse move event listener
-    var mouseMoveListernerAdapter = function () {
+    var mouseMoveListernerAdapter = function (event) {
         onMouseMove(gl, canvas, vBuffer, event);
     };
 
-    // Setup listeners
-    canvas.addEventListener("mousedown", function () {
+    // Setup mouse listeners
+    canvas.addEventListener("mousedown", function (event) {
         onMouseDown(gl, canvas, vBuffer, event, mouseMoveListernerAdapter);
     });
 
     canvas.addEventListener("mouseup", function () {
         onMouseUp(canvas, mouseMoveListernerAdapter);
     });
+
+    // Set up thickness change listener
+    document.getElementById("thickness").onchange = function (event) {
+        gl.lineWidth(event.target.value);
+    };
 };
 
 /**

@@ -1,8 +1,7 @@
 var gl;
 var points;
 
-window.onload = function init()
-{
+function renderTriangle() {
     var canvas = document.getElementById( "gl-canvas" );
     
     gl = WebGLUtils.setupWebGL( canvas );
@@ -34,7 +33,9 @@ window.onload = function init()
     gl.enableVertexAttribArray( vPosition );
 
     // Add colors to vertices
-    var colors = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+    var colors = [Math.random(), Math.random(), Math.random(),
+                  Math.random(), Math.random(), Math.random(),
+                  Math.random(), Math.random(), Math.random()];
     var cBufferId = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, cBufferId);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
@@ -50,4 +51,11 @@ window.onload = function init()
 function render() {
     gl.clear( gl.COLOR_BUFFER_BIT );
     gl.drawArrays( gl.TRIANGLES, 0, 3 );
+}
+
+window.onload = function init() {
+   renderTriangle();
+   document.getElementById("gl-canvas").onclick = function() {
+      renderTriangle();
+   }
 }

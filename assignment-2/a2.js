@@ -30,14 +30,24 @@ window.onload = function () {
     gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
 
+    // Initialize color buffer
+    var vColorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vColorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, 16 * maxVertices, gl.STATIC_DRAW);
+    var vColor = gl.getAttribLocation(program, "vColor");
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vColor);
+
+
     // Adapter that calls the real mouse move event listener
     var mouseMoveListernerAdapter = function (event) {
-        onMouseMove(gl, canvas, vBuffer, event);
+        onMouseMove(gl, canvas, vBuffer, vColorBuffer, event);
     };
 
     // Setup mouse listeners
     canvas.addEventListener("mousedown", function (event) {
-        onMouseDown(gl, canvas, vBuffer, event, mouseMoveListernerAdapter);
+        onMouseDown(gl, canvas, vBuffer, vColorBuffer, event,
+                mouseMoveListernerAdapter);
     });
 
     canvas.addEventListener("mouseup", function () {
@@ -53,17 +63,16 @@ window.onload = function () {
 /**
  * Handles mouse move events.
  *  
- * @param  glContext  WebGl context.
- * @param  canvas     HTML canvas.
- * @param  vBuffer    Vertex buffer.
- * @param  event      Event to handle.
+ * @param  glContext     WebGl context.
+ * @param  canvas        HTML canvas.
+ * @param  vBuffer       Vertex buffer.
+ * @param  vColorBuffer  Color buffer.
+ * @param  event         Event to handle.
  */
-function onMouseMove(glContext, canvas, vBuffer, event) {
+function onMouseMove(glContext, canvas, vBuffer, vColorBuffer, event) {
+    // Increase number of times this function has been called
     onMouseMove.count++;
-    var x = event.clientX;
-    var y = event.clientY;
-    console.log("(" + onMouseMove.count + "): " + x + " " + y);
-    addVertex(glContext, canvas, vBuffer, event);
+    addVertex(glContext, canvas, vBuffer, vColorBuffer, event);
     render(glContext);
 }
 
@@ -73,14 +82,15 @@ function onMouseMove(glContext, canvas, vBuffer, event) {
  * @param  glContext          WebGL context.
  * @param  canvas             HTML canvas.
  * @param  vBuffer            Vertex buffer.
+ * @param  vColorBuffer       Color buffer.
  * @param  event              Event to handle.
  * @param  mouseMoveListener  Function to set as mouse move listener.
  */
-function onMouseDown(glContext, canvas, vBuffer, event, mouseMoveListener) {
+function onMouseDown(glContext, canvas, vBuffer, vColorBuffer, event, mouseMoveListener) {
     // (Re)set the number of times that the onMouseMove has been called 
     onMouseMove.count = 0;
     // Add the current vertex to the vertex buffer
-    addVertex(glContext, canvas, vBuffer, event);
+    addVertex(glContext, canvas, vBuffer, vColorBuffer, event);
     // Install the mouse move event listener for adding more vertices
     canvas.addEventListener("mousemove", mouseMoveListener);
 }
@@ -97,20 +107,46 @@ function onMouseUp(canvas, mouseMoveListener) {
 }
 
 /**
- * Add a vertex to the vertex buffer.
+ * Adda a vertex to the vertex and color buffer.
  * 
- * @param glContext  WebGL context.
- * @param canvas     HTML canvas.
- * @param vBuffer    The vertex buffer.
- * @param event      Event containing the point to add.
+ * @param glContext     WebGL context.
+ * @param canvas        HTML canvas.
+ * @param vBuffer       The vertex buffer.
+ * @param vColorBuffer  Color buffer.
+ * @param event         Event containing the point to add.
  */
-function addVertex(glContext, canvas, vBuffer, event) {
+function addVertex(glContext, canvas, vBuffer, vColorBuffer, event) {
     p = vec2(2 * event.clientX / canvas.width - 1,
             2 * (canvas.height - event.clientY) / canvas.height - 1);
 
+    // Calculate the offset that corresponds to the new vertex
     var offset = 8 * onMouseMove.count;
+
+    // Add vertex
     glContext.bindBuffer(glContext.ARRAY_BUFFER, vBuffer);
     glContext.bufferSubData(glContext.ARRAY_BUFFER, offset, flatten(p));
+
+    // Pick vertex color
+    var color = pickColor(document.getElementById("line-color").value);
+
+    // Add color
+    glContext.bindBuffer(glContext.ARRAY_BUFFER, vColorBuffer);
+    glContext.bufferSubData(glContext.ARRAY_BUFFER, 2 * offset, color);
+}
+
+/**
+ * Picks a color from the color picker.
+ * 
+ * @param hex  Hexadecimal value representing a RGB color.
+ * @returns The color is returned as a Float32Array.
+ */
+function pickColor(hex) {
+    hex = hex.replace(/#/g, "0x");
+    var rgb = parseInt(hex, 16);
+    var red = (rgb >> 16) / 255.0;
+    var green = ((rgb >> 8) & 255) / 255.0;
+    var blue = (rgb & 255) / 255.0;
+    return flatten(vec4(red, green, blue, 1.0));
 }
 
 /**

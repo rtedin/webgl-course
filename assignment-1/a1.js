@@ -124,12 +124,12 @@ function processAndRender(gl) {
 window.onload = function init() {
    var gl = setUpCanvas(); if(!gl) { alert("WegGL is not available"); }
    processAndRender(gl);
-   document.getElementById("twist").onchange = function() {
-      twist = event.srcElement.value / 10.0;
+   document.getElementById("twist").onchange = function(event) {
+      twist = event.target.value / 10.0;
       processAndRender(gl);
    }
-   document.getElementById("divisions").onchange = function() {
-      divisions = event.srcElement.value;
+   document.getElementById("divisions").onchange = function(event) {
+      divisions = event.target.value;
       processAndRender(gl);
    }
 }

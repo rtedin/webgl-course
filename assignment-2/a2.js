@@ -3,7 +3,14 @@
  * 
  * @type Number
  */
-var maxVertices = 1000;
+var maxVertices = 1024 * 1024;
+
+/**
+ * Minimum distance between two points for adding new points.
+ * 
+ * @type Number
+ */
+var minDistance = 15;
 
 /**
  * Starting point.
@@ -65,7 +72,25 @@ window.onload = function () {
     document.getElementById("thickness").onchange = function (event) {
         gl.lineWidth(event.target.value);
     };
+    
+    // Set up minimum distance change listener
+    document.getElementById("min-distance").onchange = function (event) {
+        minDistance = event.target.value;
+    };
 };
+
+/**
+ * Determines whether the current event is far enough (in space) in respect to
+ * the last one.
+ *  
+ * @param event Current event.
+ */
+function enoughDistance(event) {
+    var u = vec2(event.clientX, event.clientY);
+    var v = onMouseMove.last;
+    var diff = subtract(u,v);
+    return Math.sqrt(dot(diff, diff)) > minDistance;
+}
 
 /**
  * Handles mouse move events.
@@ -77,15 +102,17 @@ window.onload = function () {
  * @param  event         Event to handle.
  */
 function onMouseMove(glContext, canvas, vBuffer, vColorBuffer, event) {
-    // Add the current vertex to the vertex buffer
-    addVertex(glContext, canvas, vBuffer, vColorBuffer, event);
+    if (enoughDistance(event)) {
+        // Add the current vertex to the vertex buffer
+        addVertex(glContext, canvas, vBuffer, vColorBuffer, event);
 
-    // Update line length and number of total vertices
-    render.len[render.nLines]++;
-    render.nVertices++;
+        // Update line length and number of total vertices
+        render.len[render.nLines]++;
+        render.nVertices++;
 
-    // Show the lines
-    render(glContext);
+        // Show the lines
+        render(glContext);
+    }
 }
 
 /**
@@ -110,6 +137,9 @@ function onMouseDown(glContext, canvas, vBuffer, vColorBuffer, event, mouseMoveL
     render.nLines++;
     render.start[render.nLines] = render.nVertices;
     render.nVertices++; // We just added one vertex
+
+    // Remember the last point
+    onMouseMove.last = vec2(event.clientX, event.clientY);
 
     // Install the mouse move event listener for adding more vertices
     canvas.addEventListener("mousemove", mouseMoveListener);

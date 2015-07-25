@@ -38,11 +38,18 @@ window.onload = function () {
     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vColor);
 
+    render(gl);
 
     // Adapter that calls the real mouse move event listener
     var mouseMoveListernerAdapter = function (event) {
         onMouseMove(gl, canvas, vBuffer, vColorBuffer, event);
     };
+
+    // Initialize render stats
+    render.start = [];    // Start index of each line
+    render.nVertices = 0; // Number of vertices
+    render.len = [];      // Length of each line
+    render.nLines = -1;   // Number of lines
 
     // Setup mouse listeners
     canvas.addEventListener("mousedown", function (event) {
@@ -50,8 +57,8 @@ window.onload = function () {
                 mouseMoveListernerAdapter);
     });
 
-    canvas.addEventListener("mouseup", function () {
-        onMouseUp(canvas, mouseMoveListernerAdapter);
+    canvas.addEventListener("mouseup", function (event) {
+        onMouseUp(gl, canvas, mouseMoveListernerAdapter);
     });
 
     // Set up thickness change listener
@@ -70,9 +77,14 @@ window.onload = function () {
  * @param  event         Event to handle.
  */
 function onMouseMove(glContext, canvas, vBuffer, vColorBuffer, event) {
-    // Increase number of times this function has been called
-    onMouseMove.count++;
+    // Add the current vertex to the vertex buffer
     addVertex(glContext, canvas, vBuffer, vColorBuffer, event);
+
+    // Update line length and number of total vertices
+    render.len[render.nLines]++;
+    render.nVertices++;
+
+    // Show the lines
     render(glContext);
 }
 
@@ -87,21 +99,29 @@ function onMouseMove(glContext, canvas, vBuffer, vColorBuffer, event) {
  * @param  mouseMoveListener  Function to set as mouse move listener.
  */
 function onMouseDown(glContext, canvas, vBuffer, vColorBuffer, event, mouseMoveListener) {
-    // (Re)set the number of times that the onMouseMove has been called 
-    onMouseMove.count = 0;
     // Add the current vertex to the vertex buffer
     addVertex(glContext, canvas, vBuffer, vColorBuffer, event);
+
+    // Start new line
+    render.start.push(0);
+    render.len.push(0);
+
+    // Start a new line and mark the start position
+    render.nLines++;
+    render.start[render.nLines] = render.nVertices;
+    render.nVertices++; // We just added one vertex
+
     // Install the mouse move event listener for adding more vertices
     canvas.addEventListener("mousemove", mouseMoveListener);
 }
 
 /**
  * Handles mouse up events.
- * 
+ * @param glContext          WebGL context.
  * @param canvas             HTML canvas.
  * @param mouseMoveListener  Function to remove as mouse move listener.
  */
-function onMouseUp(canvas, mouseMoveListener) {
+function onMouseUp(glContext, canvas, mouseMoveListener) {
     // By removing this listener no more vertices are added when the mouse moves
     canvas.removeEventListener("mousemove", mouseMoveListener);
 }
@@ -120,7 +140,7 @@ function addVertex(glContext, canvas, vBuffer, vColorBuffer, event) {
             2 * (canvas.height - event.clientY) / canvas.height - 1);
 
     // Calculate the offset that corresponds to the new vertex
-    var offset = 8 * onMouseMove.count;
+    var offset = 8 * render.nVertices;
 
     // Add vertex
     glContext.bindBuffer(glContext.ARRAY_BUFFER, vBuffer);
@@ -156,5 +176,9 @@ function pickColor(hex) {
  */
 function render(glContext) {
     glContext.clear(glContext.COLOR_BUFFER_BIT);
-    glContext.drawArrays(glContext.LINE_STRIP, 0, onMouseMove.count + 1);
+
+    for (var l = 0; l <= render.nLines; l++) {
+        glContext.drawArrays(glContext.LINE_STRIP, render.start[l],
+                render.len[l]);
+    }
 }

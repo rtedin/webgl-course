@@ -9,15 +9,21 @@
 
         <script id="vertex-shader" type="x-shader/x-vertex">
             attribute vec4 vPosition;
+            attribute vec4 vColor;
+            varying vec4 fColor;
+
             void main(void) {
             gl_Position = vPosition;
+            fColor = vColor;
             }
         </script>
 
         <script id="fragment-shader" type="x-shader/x-fragment">
             precision mediump float;
+            varying vec4 fColor;
+
             void main(void) {
-            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            gl_FragColor = fColor;
             }
         </script>
     </head>
@@ -28,12 +34,17 @@
             </canvas>
         </div>
         <div>
-            <div>
-                Thickness 1
-                <input id="thickness" type="range" min="1" max="10" step="1" value="1" />
-                10
-            </div>
+            Thickness 1
+            <input id="thickness" type="range" min="1" max="10" step="1" value="1" />
+            10
         </div>
-
+        <div>
+            Choose color: <input id="line-color" type="color" value="#ff0000"/>
+        </div>
+        <div>
+            Minimum distance between points [px]
+            <input id="min-distance" type="range" min="1" max="20" step="1" value="15" />
+            20
+        </div>
     </body>
 </html>
